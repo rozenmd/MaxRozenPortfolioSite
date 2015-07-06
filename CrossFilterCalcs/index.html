@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="/CrossFilterCalcs/js/d3.js" charset="utf-8"></script>
+<script type="text/javascript" src="/CrossFilterCalcs/js/crossfilter.js"></script>
+<script type="text/javascript" src="/CrossFilterCalcs/js/dc.js"></script>
+<link rel="stylesheet" type="text/css" href="/CrossFilterCalcs/css/dc.css" media="screen" /> 
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>RozenMD - D3/Dc/Crossfilter Javascript</title>
+
+    <!-- Bootstrap Core CSS -->
+    
+
+    <!-- Custom CSS -->
+    <style>
+    body {
+        padding-top: 70px;
+        /* Required padding for .navbar-fixed-top. Remove if using .navbar-static-top. Change if height of navigation changes. */
+    }
+    </style>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">RozenMD</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a target="_blank" href="https://www.linkedin.com/in/rozenmd">About</a>
+                    </li>
+                     <li>
+                        <a href="/versionOne">Version One</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container -->
+    </nav>
+
+    <!-- Page Content -->
+    <div class="container">
+<div class="selection">
+    <select id="companies" onchange="run()">
+        <option>Pick a company</option>
+    </select>
+</div>
+<div id="output"></div> 
+
+ <div id="chart-ring-year">
+        <strong>Years</strong>
+        <a class="reset" href="javascript:yearRingChart.filterAll();CloselineChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+<div id="quarter-chart">
+        <strong>Quarters</strong>
+        <a class="reset" href="javascript:quarterChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+    <div id="returnval-chart">
+        <strong>Days by Return(%)</strong>
+        <span class="reset" style="display: none;">range: <span class="filter"></span></span>
+        <a class="reset" href="javascript:returnValChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+        
+<div class="row" style="text-align:center;">
+
+<div id="profit-loss-chart">
+        <strong>Days by Profit/Loss</strong>
+        <a class="reset" href="javascript:profitOrLossChart.filterAll();dc.redrawAll();" style="display: none;">reset</a>
+
+        <div class="clearfix"></div>
+    </div>
+<div id="chart-line-close">  
+    <div style="text-align:center;">
+        <strong>ASX200 - Closing Value<a class="reset" href="javascript:CloselineChart.filterAll();dc.redrawAll();" style="display: none;"> - reset</a>        
+        </strong>
+    </div>
+</div>
+</div>
+<!-- Insert Distribution of returns here -->
+
+    <div class="row">
+      <div id="data-count" class="dc-data-count dc-chart">
+            <span class="filter-count"></span> selected out of <span class="total-count"></span> records
+        </div>
+        <table class="table table-bordered table-hover dc-data-table dc-chart">
+                <thead>
+                <tr class="header">
+                    <th>Date</th>
+                    <th>Close</th>
+                    <th>Change</th>
+                    <th>Quarter</th>
+                </tr>
+                </thead>
+        </table>
+
+        
+    </div>
+
+        <!-- /.row -->
+
+    </div>
+    <!-- /.container -->
+
+    <!-- jQuery Version 1.11.1 -->
+    <script src="/CrossFilterCalcs/js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="/CrossFilterCalcs/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/CrossFilterCalcs/js/colorbrewer.js"></script>
+
+</body>
+<script>
+var quarterChart = dc.pieChart('#quarter-chart');
+var yearRingChart   = dc.pieChart("#chart-ring-year");
+var CloselineChart  = dc.lineChart("#chart-line-close"); 
+var returnValChart = dc.barChart('#returnval-chart');
+var profitOrLossChart = dc.pieChart('#profit-loss-chart');
+
+d3.csv("companies.csv", function(list) {
+    var dropdown = document.getElementById("companies");
+    var options = []; 
+    options = list.map(function(d){ return d.name;});
+    for (var i = 0; i < options.length; i++){
+        var current = options[i];
+        var el = document.createElement("option");
+        el.textContent = current;
+        el.value = current;
+        dropdown.appendChild(el);
+    }
+});
+function run(){
+
+    d3.csv("companies.csv", function(data){
+    var dropdown = document.getElementById("companies");
+    var selectedValue = dropdown.options[dropdown.selectedIndex].value;
+    var codeVal = "";
+    console.log(selectedValue);    
+        //This is so inefficient I can't even
+        data.some(function(d) {
+            if(selectedValue == d.name){
+                console.log(d.code);
+                codeVal = d.code;
+                return true;
+            } 
+        });
+        runDash(codeVal);
+    });
+}
+</script>
+<script>
+function runDash(codeStr){
+    var filePath = "companyCsv/" + codeStr + ".csv";
+    //var correctPath = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20yahoo.finance.historicaldata%20where%20symbol%20%3D%20%22" + codeStr + "%22%20and%20startDate%20%3D%20%222012-09-11%22%20and%20endDate%20%3D%20%222014-02-11%22&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="
+    console.log(filePath);
+    d3.csv(filePath, function(data) {
+        var dateFormat = d3.time.format("%Y-%m-%d").parse;
+        var numberFormat = d3.format('.3f');
+        var lastClose = 0;
+
+      //   function print_filter(filter){
+      // var f=eval(filter);
+      // if (typeof(f.length) != "undefined") {}else{}
+      // if (typeof(f.top) != "undefined") {f=f.top(Infinity);}else{}
+      // if (typeof(f.dimension) != "undefined") {f=f.dimension(function(d) { return "";}).top(Infinity);}else{}
+      // console.log(filter+"("+f.length+") = "+JSON.stringify(f).replace("[","[\n\t").replace(/}\,/g,"},\n\t").replace("]","\n]"));} 
+
+        data.forEach(function(d) { 
+            d.oldDate = d.date;
+            d.dd = dateFormat(d.date);
+            d.date = dateFormat(d.date);
+            d.Close = numberFormat(d.Close); 
+            d.Return = +d.Return;
+            d.lastClose = +lastClose;
+            if (lastClose == 0){
+                d.Return2 = 0;
+            } else {
+                d.Return2 = numberFormat((d.Close/lastClose - 1));
+            }
+            lastClose = d.Close;
+            d.Year=d.dd.getFullYear();
+
+        });
+
+        var ndx = crossfilter(data);
+        var all = ndx.groupAll();
+        var dateDim = ndx.dimension(function(d) {return d.dd;});
+        var close = dateDim.group().reduceSum(function(d) {return d.Close;});
+        var yearDim  = ndx.dimension(function(d) {return +d.Year;});
+        var year_total = yearDim.group().reduceSum(function(d) {return +d.Close;});  
+        // var quarter = ndx.dimension(function (d) {return d.Quarter;});
+        var quarter = ndx.dimension(function (d) {
+        var month = d.dd.getMonth();
+        if (month <= 2) {
+            return 'Q1';
+        } else if (month > 2 && month <= 5) {
+            return 'Q2';
+        } else if (month > 5 && month <= 8) {
+            return 'Q3';
+        } else {
+            return 'Q4';
+        }
+    });
+        var quarterGroup = quarter.group().reduceSum(function (d) {return d.Close;});
+        var profitOrLoss = ndx.dimension(function (d) {
+                return d.Return2 < 0 ? 'Loss' : 'Gain';
+            });
+        var profitOrLossGroup = profitOrLoss.group();
+
+        var returnVal = ndx.dimension(function (d) {
+            return d.Return2 * 100;
+        });
+        var returnValGroup = returnVal.group();
+        var minDate = dateDim.bottom(1)[0].date;
+        var maxDate = dateDim.top(1)[0].date;
+        var dateDimPerformance = dateDim.group().reduce(
+            function (p, v) {
+                ++p.count;
+                p.absGain += v.Return2;
+                p.sumGain += v.Close;
+                p.avgReturn = p.absGain / p.count;
+                return p;
+            },
+            /* callback for when data is removed from the current filter results */
+            function (p, v) {
+                --p.count;
+                p.absGain -= v.Return2;
+                p.sumGain -= v.Close;
+                p.avgReturn = p.absGain / p.count;
+                console.log(p.avgReturn);
+                console.log(p.sumGain);
+                return p;
+            },
+            /* initialize p */
+            function () {
+                return {
+                    count: 0,
+                    absGain: 0,
+                    sumGain: 0,
+                    avgReturn: 0,
+                };
+            }
+        );
+
+        quarterChart
+            .width(180)
+            .height(180)
+            .radius(80)
+            .innerRadius(30)
+            .dimension(quarter)
+            .group(quarterGroup);
+        yearRingChart
+            .width(180).height(180)
+            .dimension(yearDim)
+            .group(year_total)
+            .innerRadius(30)
+            .radius(80);
+        CloselineChart
+            .renderArea(true)
+            .group(close)
+            .xUnits(d3.time.days)
+            .width(750).height(250)
+            .transitionDuration(1000)
+            .margins({top: 30, right: 50, bottom: 25, left: 40})
+            .dimension(dateDim)
+            .yAxisLabel("Close")  
+            .x(d3.time.scale().domain([minDate,maxDate])); 
+
+        dc.dataTable(".dc-data-table")
+            .dimension(dateDim)
+            .group(function(d) {
+                return d.dd.getFullYear() + "/" + (d.dd.getMonth() + 1);
+            })
+            .size(10)
+            .columns([
+                function(d) { return d.oldDate; },
+                function(d) { return d3.round(d.Close,2); },
+                function(d) { return d3.round(d.Return2*100,2) + "%"; },
+                function(d) { return d.Quarter; }
+            ])
+            .sortBy(function (d) {
+                return d.dd;
+            })
+            .order(d3.ascending)
+
+            .renderlet(function (table) {
+                table.selectAll(".dc-table-group").classed("info", true);
+            });
+
+
+        profitOrLossChart
+            .width(180) // (optional) define chart width, :default = 200
+            .height(180) // (optional) define chart height, :default = 200
+            .radius(80) // define pie radius
+            .dimension(profitOrLoss) // set dimension
+            .group(profitOrLossGroup) // set group
+            .label(function (d) {
+                if (profitOrLossChart.hasFilter() && !profitOrLossChart.hasFilter(d.key)) {
+                    return d.key + '(0%)';
+                }
+                var label = d.key;
+                if (all.value()) {
+                    label += '(' + Math.floor(d.value / all.value() * 100) + '%)';
+                }
+                return label;
+            }); 
+
+        returnValChart
+            .width(420)
+            .height(180)
+            .margins({top: 10, right: 50, bottom: 30, left: 40})
+            .dimension(returnVal)
+            .group(returnValGroup)
+            .elasticY(true)
+            .centerBar(true)
+            .gap(1)
+            .round(dc.round.floor)
+            .alwaysUseRounding(true)
+            .x(d3.scale.linear().domain([-25, 25]))
+            .renderHorizontalGridLines(true)
+            .filterPrinter(function (filters) {
+                var filter = filters[0], s = '';
+                s += numberFormat(filter[0]) + '% -> ' + numberFormat(filter[1]) + '%';
+                return s;
+            });
+            returnValChart.xAxis().tickFormat(
+                function (v) { return v + '%'; });
+            returnValChart.yAxis().ticks(5);
+
+        dc.dataCount("#data-count")
+            .dimension(ndx) // set dimension to all data
+            .group(all); // set group to ndx.groupAll()
+        // print_filter("data");
+        dc.renderAll();
+    });
+}
+</script>
+</html>

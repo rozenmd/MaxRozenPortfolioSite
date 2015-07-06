@@ -1167,7 +1167,7 @@ hr {
 .sr-only-focusable:active,
 .sr-only-focusable:focus {
   position: static;
-  width: auto;
+  I: auto;
   height: auto;
   margin: 0;
   overflow: visible;

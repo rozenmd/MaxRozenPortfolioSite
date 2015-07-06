@@ -1,0 +1,293 @@
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.js" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.0.4/d3.js" charset="utf-8"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crossfilter/1.3.11/crossfilter.js"></script>
+<!-- <script type="text/javascript" src="dc.min.js"></script>
+ -->
+ <script type="text/javascript" src="dc.js"></script>
+
+ <link rel="stylesheet" type="text/css" href="dc.css" media="screen" /> 
+
+<body>
+<div id="chart-ring-year"></div>
+<div id="chart-line-hitsperday-q1" ></div>
+<div id="chart-line-hitsperday-q2" style='margin-left:-45px'></div>
+<div id="chart-line-hitsperday-q3" style='margin-left:-45px'></div>
+<div id="chart-line-hitsperday-q4" style='margin-left:-45px'></div>
+</body>
+
+<script>var data = [
+  {"quarter":"Q1","hits":0,"date":"01/01/2011"},
+  {"quarter":"Q1","hits":0,"date":"01/15/2011"},
+  {"quarter":"Q1","hits":0,"date":"02/01/2011"},
+  {"quarter":"Q1","hits":0,"date":"02/15/2011"},
+  {"quarter":"Q1","hits":0,"date":"03/01/2011"},
+  {"quarter":"Q1","hits":0,"date":"03/15/2011"},
+  {"quarter":"Q2","hits":0,"date":"04/01/2011"},
+  {"quarter":"Q2","hits":0,"date":"04/15/2011"},
+  {"quarter":"Q2","hits":0,"date":"05/01/2011"},
+  {"quarter":"Q2","hits":0,"date":"05/15/2011"},
+  {"quarter":"Q2","hits":0,"date":"06/01/2011"},
+  {"quarter":"Q2","hits":0,"date":"06/15/2011"},
+  {"quarter":"Q3","hits":0,"date":"07/01/2011"},
+  {"quarter":"Q3","hits":0,"date":"07/15/2011"},
+  {"quarter":"Q3","hits":0,"date":"08/01/2011"},
+  {"quarter":"Q3","hits":0,"date":"08/15/2011"},
+  {"quarter":"Q3","hits":0,"date":"09/01/2011"},
+  {"quarter":"Q3","hits":0,"date":"09/15/2011"},
+  {"quarter":"Q4","hits":12,"date":"10/01/2011"},
+  {"quarter":"Q4","hits":13,"date":"10/15/2011"},
+  {"quarter":"Q4","hits":16,"date":"11/01/2011"},
+  {"quarter":"Q4","hits":15,"date":"11/15/2011"},
+  {"quarter":"Q4","hits":12,"date":"12/01/2011"},
+  {"quarter":"Q4","hits":10,"date":"12/15/2011"},
+
+  {"quarter":"Q1","hits":25,"date":"01/01/2012"},
+  {"quarter":"Q1","hits":27,"date":"01/15/2012"},
+  {"quarter":"Q1","hits":28,"date":"02/01/2012"},
+  {"quarter":"Q1","hits":26,"date":"02/15/2012"},
+  {"quarter":"Q1","hits":29,"date":"03/01/2012"},
+  {"quarter":"Q1","hits":24,"date":"03/15/2012"},
+  {"quarter":"Q2","hits":36,"date":"04/01/2012"},
+  {"quarter":"Q2","hits":33,"date":"04/15/2012"},
+  {"quarter":"Q2","hits":35,"date":"05/01/2012"},
+  {"quarter":"Q2","hits":35,"date":"05/15/2012"},
+  {"quarter":"Q2","hits":39,"date":"06/01/2012"},
+  {"quarter":"Q2","hits":34,"date":"06/15/2012"},
+  {"quarter":"Q3","hits":41,"date":"07/01/2012"},
+  {"quarter":"Q3","hits":45,"date":"07/15/2012"},
+  {"quarter":"Q3","hits":40,"date":"08/01/2012"},
+  {"quarter":"Q3","hits":42,"date":"08/15/2012"},
+  {"quarter":"Q3","hits":47,"date":"09/01/2012"},
+  {"quarter":"Q3","hits":43,"date":"09/15/2012"},
+  {"quarter":"Q4","hits":55,"date":"10/01/2012"},
+  {"quarter":"Q4","hits":57,"date":"10/15/2012"},
+  {"quarter":"Q4","hits":54,"date":"11/01/2012"},
+  {"quarter":"Q4","hits":53,"date":"11/15/2012"},
+  {"quarter":"Q4","hits":51,"date":"12/01/2012"},
+  {"quarter":"Q4","hits":50,"date":"12/15/2012"},
+
+  {"quarter":"Q1","hits":32,"date":"01/01/2013"},
+  {"quarter":"Q1","hits":36,"date":"01/15/2013"},
+  {"quarter":"Q1","hits":34,"date":"02/01/2013"},
+  {"quarter":"Q1","hits":31,"date":"02/15/2013"},
+  {"quarter":"Q1","hits":33,"date":"03/01/2013"},
+  {"quarter":"Q1","hits":36,"date":"03/15/2013"},
+  {"quarter":"Q2","hits":45,"date":"04/01/2013"},
+  {"quarter":"Q2","hits":40,"date":"04/15/2013"},
+  {"quarter":"Q2","hits":42,"date":"05/01/2013"},
+  {"quarter":"Q2","hits":49,"date":"05/15/2013"},
+  {"quarter":"Q2","hits":44,"date":"06/01/2013"},
+  {"quarter":"Q2","hits":42,"date":"06/15/2013"},
+  {"quarter":"Q3","hits":58,"date":"07/01/2013"},
+  {"quarter":"Q3","hits":53,"date":"07/15/2013"},
+  {"quarter":"Q3","hits":58,"date":"08/01/2013"},
+  {"quarter":"Q3","hits":52,"date":"08/15/2013"},
+  {"quarter":"Q3","hits":54,"date":"09/01/2013"},
+  {"quarter":"Q3","hits":58,"date":"09/15/2013"},
+  {"quarter":"Q4","hits":65,"date":"10/01/2013"},
+  {"quarter":"Q4","hits":63,"date":"10/15/2013"},
+  {"quarter":"Q4","hits":66,"date":"11/01/2013"},
+  {"quarter":"Q4","hits":64,"date":"11/15/2013"},
+  {"quarter":"Q4","hits":68,"date":"12/01/2013"},
+  {"quarter":"Q4","hits":63,"date":"12/15/2013"}
+];
+  var ndx = crossfilter(data);
+  var parseDate = d3.time.format("%m/%d/%Y").parse;
+    var parseDate2 = d3.time.format("%m/%d").parse;
+  data.forEach(function(d) {
+    d.date = parseDate(d.date);
+    d.qtime = parseDate2((d.date.getMonth()+1)+"/"+d.date.getDate());
+        d.Year=d.date.getFullYear();
+  });
+/************
+Year Ring
+*************/
+var yearRingChart   = dc.pieChart("#chart-ring-year");
+var yearDim  = ndx.dimension(function(d) {return +d.Year;});
+//var year_total = yearDim.group().reduceSum(function(d) {return d.http_200+d.http_302+d.http_404;});
+var year_total = yearDim.group().reduceSum(function(d) {return d.hits;});
+yearRingChart
+    .width(200).height(200)
+    .legend(dc.legend().x(80).y(70).itemHeight(13).gap(5))
+    .dimension(yearDim)
+    .group(year_total)
+    .innerRadius(60)
+    .renderLabel(false)
+    .renderTitle(false)
+    .ordinalColors(["#56B2EA","#E064CD","#F8B700","#78CC00","#7B71C5"])
+;
+
+/************
+Common Area Chart data
+*************/
+
+var dateDim = ndx.dimension(function(d) {return d.qtime;});
+var hits = dateDim.group().reduceSum(function(d) {return d.hits;});
+
+var hits_2011=dateDim.group().reduceSum(function(d) {if (d.Year===2011) {return d.hits;}else{return 0;}});
+var hits_2012=dateDim.group().reduceSum(function(d) {if (d.Year===2012) {return d.hits;}else{return 0;}});
+var hits_2013=dateDim.group().reduceSum(function(d) {if (d.Year===2013) {return d.hits;}else{return 0;}});
+
+var target_2011=dateDim.group().reduceSum(function(d) {if (d.Year===2011 ) {return 10;}else{return 0;}});
+var target_2012=dateDim.group().reduceSum(function(d) {if (d.Year===2012 ) {return 20;}else{return 0;}});
+var target_2013=dateDim.group().reduceSum(function(d) {if (d.Year===2013 ) {return 30;}else{return 0;}});
+
+/************
+Q1
+*************/
+var hitslineChart_q1  = dc.compositeChart("#chart-line-hitsperday-q1");
+var minDate_q1 = new Date("01/01/1900");
+var maxDate_q1 = new Date("03/15/1900");
+
+var compose1 = dc.lineChart(hitslineChart_q1)
+                .dimension(hits)
+                .ordinalColors(["#56B2EA","#E064CD","#F8B700","#78CC00","#7B71C5"])
+                .renderArea(true)
+                .group(hits_2011, "2011")
+                .stack(hits_2012,"2012")
+                .stack(hits_2013,"2013");
+
+var compose2= dc.lineChart(hitslineChart_q1)
+                .dimension(dateDim)
+                .ordinalColors(["#56B2EA","#E064CD","#F8B700","#78CC00","#7B71C5"])
+                .group(target_2011,"2011 Target")
+                .stack(target_2012,"2012 Target")
+                .stack(target_2013,"2013 Target")
+                .dashStyle([5,5]);
+
+hitslineChart_q1
+  .width(210).height(250)
+  .x(d3.time.scale().domain([minDate_q1,maxDate_q1]))
+        .brushOn(false)
+        .legend(dc.legend().x(60).y(10).itemHeight(13).gap(5))
+  .yAxisLabel("Hits Per Day")
+        .xAxisLabel("Q1")
+        .compose([compose1, compose2])
+        .xAxis().ticks(0)
+    ; 
+/************
+Q2
+*************/
+var hitslineChart_q2  = dc.compositeChart("#chart-line-hitsperday-q2");
+var minDate_q2 = new Date("04/01/1900");
+var maxDate_q2 = new Date("06/15/1900");
+
+var compose1 = dc.lineChart(hitslineChart_q2)
+                .dimension(hits)
+                .ordinalColors(["#56B2EA","#E064CD","#F8B700","#78CC00","#7B71C5"])
+                .renderArea(true)
+                .group(hits_2011,"2011")
+                .stack(hits_2012,"2012")
+                .stack(hits_2013,"2013");
+
+var compose2= dc.lineChart(hitslineChart_q2)
+                .dimension(dateDim)
+                .ordinalColors(["#56B2EA","#E064CD","#F8B700","#78CC00","#7B71C5"])
+                .group(target_2011,"2011 Target")
+                .stack(target_2012,"2012 Target")
+                .stack(target_2013,"2013 Target")
+                .dashStyle([5,5]);
+
+hitslineChart_q2
+  .width(200).height(250)
+  .x(d3.time.scale().domain([minDate_q2,maxDate_q2]))
+        .brushOn(false)
+        .xAxisLabel("Q2")
+        .compose([compose1, compose2])
+        .renderlet(function (chart) {chart.selectAll("g.x path.domain").attr('d', 'M0,0H118')})  
+        .xAxis().ticks(0)
+    ;
+    /************
+Q3
+*************/
+var hitslineChart_q3  = dc.compositeChart("#chart-line-hitsperday-q3");
+var minDate_q3 = new Date("04/01/1900");
+var maxDate_q3 = new Date("06/15/1900");
+
+var compose1 = dc.lineChart(hitslineChart_q3)
+                .dimension(hits)
+                .ordinalColors(["#56B2EA","#E064CD","#F8B700","#78CC00","#7B71C5"])
+                .renderArea(true)
+                .group(hits_2011,"2011")
+                .stack(hits_2012,"2012")
+                .stack(hits_2013,"2013");
+
+var compose2= dc.lineChart(hitslineChart_q3)
+                .dimension(dateDim)
+                .ordinalColors(["#56B2EA","#E064CD","#F8B700","#78CC00","#7B71C5"])
+                .group(target_2011,"2011 Target")
+                .stack(target_2012,"2012 Target")
+                .stack(target_2013,"2013 Target")
+                .dashStyle([5,5]);
+
+hitslineChart_q3
+  .width(200).height(250)
+  .x(d3.time.scale().domain([minDate_q3,maxDate_q3]))
+        .brushOn(false)
+        .xAxisLabel("Q3")
+        .compose([compose1, compose2])
+        .renderlet(function (chart) {chart.selectAll("g.x path.domain").attr('d', 'M0,0H118')})  
+        .xAxis().ticks(0)
+    ;
+    /************
+Q4
+*************/
+var hitslineChart_q4  = dc.compositeChart("#chart-line-hitsperday-q4");
+var minDate_q4 = new Date("04/01/1900");
+var maxDate_q4 = new Date("06/15/1900");
+
+var compose1 = dc.lineChart(hitslineChart_q4)
+                .dimension(hits)
+                .ordinalColors(["#56B2EA","#E064CD","#F8B700","#78CC00","#7B71C5"])
+                .renderArea(true)
+                .group(hits_2011,"2011")
+                .stack(hits_2012,"2012")
+                .stack(hits_2013,"2013");
+
+var compose2= dc.lineChart(hitslineChart_q4)
+                .dimension(dateDim)
+                .ordinalColors(["#56B2EA","#E064CD","#F8B700","#78CC00","#7B71C5"])
+                .group(target_2011,"2011 Target")
+                .stack(target_2012,"2012 Target")
+                .stack(target_2013,"2013 Target")
+                .dashStyle([5,5]);
+
+hitslineChart_q4
+  .width(200).height(250)
+  .x(d3.time.scale().domain([minDate_q4,maxDate_q4]))
+        .brushOn(false)
+        .xAxisLabel("Q4")
+        .compose([compose1, compose2])
+        .renderlet(function (chart) {chart.selectAll("g.x path.domain").attr('d', 'M0,0H118')})  
+        .xAxis().ticks(0)
+    ;
+  dc.renderAll();
+/************
+JQuery updates
+*************/
+
+$('#chart-ring-year').on('click', function(){
+    if ($("g.pie-slice._0").is(".deselected")){
+    hitslineChart_q1.selectAll("g.stack._0").attr("display", "none")
+    hitslineChart_q1.selectAll("g.dc-tooltip._0").attr("display", "none")
+  }else{
+    hitslineChart_q1.selectAll("g.stack._0").attr("display", null)
+    hitslineChart_q1.selectAll("g.dc-tooltip._0").attr("display", null)
+  }
+  if ($("g.pie-slice._1").is(".deselected")){
+    hitslineChart_q1.selectAll("g.stack._1").attr("display", "none")
+    hitslineChart_q1.selectAll("g.dc-tooltip._1").attr("display", "none")
+  }else{
+    hitslineChart_q1.selectAll("g.stack._1").attr("display", null)
+    hitslineChart_q1.selectAll("g.dc-tooltip._1").attr("display", null)
+  }
+  if ($("g.pie-slice._2").is(".deselected")){
+    hitslineChart_q1.selectAll("g.stack._2").attr("display", "none")
+    hitslineChart_q1.selectAll("g.dc-tooltip._2").attr("display", "none")
+  }else{
+    hitslineChart_q1.selectAll("g.stack._2").attr("display", null)
+    hitslineChart_q1.selectAll("g.dc-tooltip._2").attr("display", null)
+  } 
+}); 
+  
+</script>
